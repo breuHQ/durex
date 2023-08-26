@@ -22,7 +22,6 @@ package queues
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -114,7 +113,7 @@ func (q *queue) Prefix() string {
 func (q *queue) WorkflowID(options workflows.Options) string {
 	pfix := ""
 	if options.IsChild() {
-		pfix = options.ParentWorkflowID()
+		pfix, _ = options.ParentWorkflowID()
 	} else {
 		pfix = q.Prefix()
 	}
@@ -129,10 +128,11 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn 
 	}
 
 	if opts.IsChild() {
-		slog.Warn(
-			"child workflows should not be executed directly, us the ExecuteChildWorkflow method instead",
-			slog.String("parent", opts.ParentWorkflowID()),
-		)
+		return nil, ErrChildWorkflowExecutionAttempt
+	}
+
+	if q.client == nil {
+		return nil, ErrClientNil
 	}
 
 	return q.client.ExecuteWorkflow(

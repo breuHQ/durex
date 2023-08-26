@@ -32,14 +32,14 @@ const (
 type (
 	// Options defines the interface for creating workflow options.
 	Options interface {
-		IsChild() bool            // IsChild returns true if the workflow id is a child workflow id.
-		ParentWorkflowID() string // ParentWorkflowID returns the parent workflow id.
-		IDSuffix() string         // IDSuffix santizes the suffix of the workflow id and then formats it as a string.
-		MaxAttempts() int32       // MaxAttempts returns the max attempts for the workflow.
+		IsChild() bool                     // IsChild returns true if the workflow id is a child workflow id.
+		ParentWorkflowID() (string, error) // ParentWorkflowID returns the parent workflow id.
+		IDSuffix() string                  // IDSuffix santizes the suffix of the workflow id and then formats it as a string.
+		MaxAttempts() int32                // MaxAttempts returns the max attempts for the workflow.
 	}
 
 	// Option sets the specified options.
-	Option func(Options)
+	Option func(Options) error
 
 	// props defines the interface for creating id properties.
 	props map[string]string
@@ -84,12 +84,12 @@ func (w *options) IDSuffix() string {
 	return strings.Join(sanitized, ".")
 }
 
-func (w *options) ParentWorkflowID() string {
+func (w *options) ParentWorkflowID() (string, error) {
 	if w.parent == nil {
-		panic(ErrParentNil)
+		return "", ErrParentNil
 	}
 
-	return workflow.GetInfo(w.parent).WorkflowExecution.ID
+	return workflow.GetInfo(w.parent).WorkflowExecution.ID, nil
 }
 
 // MaxAttempts returns the max attempts for the workflow.
@@ -99,87 +99,105 @@ func (w *options) MaxAttempts() int32 {
 
 // WithParent sets the parent workflow context.
 func WithParent(parent workflow.Context) Option {
-	return func(o Options) { o.(*options).parent = parent }
+	return func(o Options) error {
+		o.(*options).parent = parent
+		return nil
+	}
 }
 
 // WithBlock sets the block name.
 func WithBlock(block string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).block != "" {
-			panic(NewDuplicateIDPropError("block", o.(*options).block, block))
+			return NewDuplicateIDPropError("block", o.(*options).block, block)
 		}
 
 		o.(*options).block = block
+
+		return nil
 	}
 }
 
 // WithBlockID sets the block value.
 func WithBlockID(val string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).blockID != "" {
-			panic(NewDuplicateIDPropError("blockID", o.(*options).blockID, val))
+			return NewDuplicateIDPropError("blockID", o.(*options).blockID, val)
 		}
 
 		o.(*options).blockID = val
+
+		return nil
 	}
 }
 
 // WithElement sets the element name.
 func WithElement(element string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).elm != "" {
-			panic(NewDuplicateIDPropError("element", o.(*options).elm, element))
+			return NewDuplicateIDPropError("element", o.(*options).elm, element)
 		}
 
 		o.(*options).elm = element
+
+		return nil
 	}
 }
 
 // WithElementID sets the element value.
 func WithElementID(val string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).elmID != "" {
-			panic(NewDuplicateIDPropError("elementID", o.(*options).elmID, val))
+			return NewDuplicateIDPropError("element id", o.(*options).elmID, val)
 		}
 
 		o.(*options).elmID = val
+
+		return nil
 	}
 }
 
 // WithMod sets the modifier name.
 func WithMod(modifier string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).mod != "" {
-			panic(NewDuplicateIDPropError("modifier", o.(*options).mod, modifier))
+			return NewDuplicateIDPropError("modifier", o.(*options).mod, modifier)
 		}
 
 		o.(*options).mod = modifier
+
+		return nil
 	}
 }
 
 // WithModID sets the modifier value.
 func WithModID(val string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		if o.(*options).modID != "" {
-			panic(NewDuplicateIDPropError("modifier id", o.(*options).modID, val))
+			return NewDuplicateIDPropError("modifier id", o.(*options).modID, val)
 		}
 
 		o.(*options).modID = val
+
+		return nil
 	}
 }
 
 // WithProp sets the prop given a key & value.
 func WithProp(key, val string) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		o.(*options).propOrder = append(o.(*options).propOrder, key)
 		o.(*options).props[key] = val
+
+		return nil
 	}
 }
 
 // WithMaxAttempts sets the max attempts for the workflow.
 func WithMaxAttempts(attempts int32) Option {
-	return func(o Options) {
+	return func(o Options) error {
 		o.(*options).maxattempts = attempts
+		return nil
 	}
 }
 
@@ -207,8 +225,12 @@ func WithMaxAttempts(attempts int32) Option {
 //
 //	id := opts.ID()
 //
-// Please note, that the design is work in progress and may change.
-func NewOptions(opts ...Option) Options {
+// NOTE: The design is work in progress and may change in future.
+func NewOptions(opts ...Option) (Options, error) {
+	var (
+		err error
+	)
+
 	w := &options{
 		props:       make(props),
 		propOrder:   make([]string, 0),
@@ -216,8 +238,11 @@ func NewOptions(opts ...Option) Options {
 	}
 
 	for _, opt := range opts {
-		opt(w)
+		err = opt(w)
+		if err != nil {
+			continue
+		}
 	}
 
-	return w
+	return w, err
 }
