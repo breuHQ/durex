@@ -231,21 +231,33 @@ func CoreQueue(
 
 ## Usage for Workflows
 
-We make the assumptions that a workflow is tied to a queue. So by calling the Queue, we should start the workflow forcing the workflow on a queue.
+We make the assumptions that a workflow is tied to a queue. So by calling the Queue.ExecuteWorkflow() to start a workflow.
 
 ```go
-package somepackage
+package main
 
 import (
   "context"
   "shared"
 
   "github.com/google/uuid"
+  "go.temporal.io/sdk/workflow"
 
   "go.breu.io/temporal-tools/workflows"
 )
 
 func main() {
+  worker := shared.CoreQueue().CreateWorker()
+  defer worker.Stop()
+
+  worker.RegisterWorkflow(Workflow)
+  worker.RegisterWorkflow(ChildWorkflow)
+
+  if err != worker.Start(); err != nil {
+    // handler error
+  }
+
+
   opts, err := workflows.NewOptions(
     workflows.WithBlock("block"),
     workflows.WithBlockID(uuid.New()), // d5e012df-5b9e-41cf-9ed5-3439eeafd8e4
