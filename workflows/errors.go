@@ -25,6 +25,7 @@ import (
 )
 
 var (
+	// ErrParentNil is returned when the parent workflow context is nil.
 	ErrParentNil = errors.New("parent workflow context is nil")
 )
 
