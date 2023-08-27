@@ -181,8 +181,8 @@ func WithName(name string) QueueOption {
 	}
 }
 
-// WithWorkflowMaxAttempts sets the maximum number of attempts for all the workflows in the queue. The default value is 0, which means
-// the workflow will be tried forever until its completion.
+// WithWorkflowMaxAttempts sets the maximum number of attempts for all the workflows in the queue.
+// The default value is 0 i.e. RetryForever.
 func WithWorkflowMaxAttempts(attempts int32) QueueOption {
 	return func(q Queue) {
 		q.(*queue).workflowMaxAttempts = attempts
