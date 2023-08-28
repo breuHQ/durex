@@ -17,7 +17,7 @@ go get go.breu.io/temporal-tools
 
 ## Why?
 
-Working with temporal and using it across multiple projects and follow the block, element, modifier technique, (famous for writing structured and maintainable css) to create idempotent workflow ids. Creating a shared library so that we don't have to use rewrite it again.
+Working with temporal and using it across multiple projects and follow the [block, element, modifier](https://getbem.com/introduction/), a technique for writing maintainable , to create idempotent workflow ids. Creating a shared library so that we don't have to use rewrite it again.
 
 ## Getting Started
 
@@ -80,10 +80,7 @@ func (c *config) Client() client.Client {
 
     options := client.Options{
       HostPort: c.ConnectionString(),
-      Logger: calldepth.New(
-          calldepth.WithLogger(c.logger),
-          calldepth.WithCallDepth(5),
-        ).WithGroup("temporal"),
+      Logger: c.logger,
     }
 
     retryTemporal := func() error {
@@ -185,7 +182,7 @@ func Temporal() temporal.Temporal {
         calldepth.NewAdapter(
           calldepth.NewLogger(slog.NewJsonLogger()),
           calldepth.WithCallDepth(5), // 5 for activities, 6 for workflows.
-         )
+         ).WithGroup("temporal")
       ),
     )
   })
@@ -211,7 +208,7 @@ var (
 )
 
 // The default value right now is "io.breu".
-// Change this, do this to change as per your requirements.
+// Change this as per your requirements. A good practice is to use java's package notation.
 func init() {
   queues.SetDefaultPrefix("com.company.pkg")
 }
@@ -268,7 +265,9 @@ func main() {
 
   exe, err := shared.CoreQueue().ExecuteWorkflow(
     context.Background(),
-    opts, // This will create the workflow id as "com.company.pkg.block.d5e012df-5b9e-41cf-9ed5-3439eeafd8e4"
+    // The workflow id created in this case would be
+    //  "com.company.pkg.block.d5e012df-5b9e-41cf-9ed5-3439eeafd8e4"
+    opts,
     Workflow, // or workflow function name
     payload...,
   )
