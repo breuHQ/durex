@@ -17,11 +17,14 @@ go get go.breu.io/temporal-tools
 
 ## Why?
 
-Working with temporal and using it across multiple projects and follow the [block, element, modifier](https://getbem.com/introduction/), a technique for writing maintainable , to create idempotent workflow ids. Creating a shared library so that we don't have to use rewrite it again.
+After working with temporal.io across multiple projects, we have standarized a set of best practices across our projects.
+For example, to create a unique & identifiable workflow id from the UI, we have found that following the [block, element, modifier](https://getbem.com/introduction/) method, a technique for writing maintainable CSS, makes it very readable and maintainable.
+
+We also found that tying the workflow to a queue makes it very easy. For us, `Queue` is where it all begins.
 
 ## Getting Started
 
-We start by creating a `Queue` first and then create workflows.
+We start by creating a `Queue` first and then call `ExecuteWorkflow` or `ExecuteChildWorkflow` methods on the `Queue` interface.
 
 ### temporal.io setup
 
@@ -269,7 +272,7 @@ func main() {
     //  "com.company.pkg.block.d5e012df-5b9e-41cf-9ed5-3439eeafd8e4"
     opts,
     Workflow, // or workflow function name
-    payload...,
+    payload,
   )
   if err != nil {
     // handle error
@@ -292,7 +295,7 @@ func Workflow(ctx context.Context, payload any) error {
     // "com.company.pkg.block.d5e012df-5b9e-41cf-9ed5-3439eeafd8e4.child.bb42d90a-d3f3-4022-bc09-aeed6e9db659"
     opts,
     ChildWorkflow,
-    payload...
+    payload,
   )
 
   // Do Something
