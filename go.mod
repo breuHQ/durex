@@ -3,6 +3,7 @@ module go.breu.io/temporal-tools
 go 1.21.0
 
 require (
+	github.com/gobeam/stringy v0.0.6
 	github.com/stretchr/testify v1.8.3
 	go.temporal.io/sdk v1.24.0
 )

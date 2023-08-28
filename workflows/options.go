@@ -22,6 +22,7 @@ package workflows
 import (
 	"strings"
 
+	"github.com/gobeam/stringy"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -112,6 +113,9 @@ func WithBlock(block string) Option {
 			return NewDuplicateIDPropError("block", o.(*options).block, block)
 		}
 
+		blockstr := stringy.New(block)
+		block := blockstr.SnakeCase("?", "", "#", "").ToLower()
+
 		o.(*options).block = block
 
 		return nil
@@ -124,6 +128,9 @@ func WithBlockID(val string) Option {
 		if o.(*options).blockID != "" {
 			return NewDuplicateIDPropError("blockID", o.(*options).blockID, val)
 		}
+
+		valstr := stringy.New(val)
+		val = valstr.SnakeCase("?", "", "#", "").ToLower()
 
 		o.(*options).blockID = val
 
@@ -138,6 +145,9 @@ func WithElement(element string) Option {
 			return NewDuplicateIDPropError("element", o.(*options).elm, element)
 		}
 
+		elementstr := stringy.New(element)
+		element := elementstr.SnakeCase("?", "", "#", "").ToLower()
+
 		o.(*options).elm = element
 
 		return nil
@@ -150,6 +160,9 @@ func WithElementID(val string) Option {
 		if o.(*options).elmID != "" {
 			return NewDuplicateIDPropError("element id", o.(*options).elmID, val)
 		}
+
+		valstr := stringy.New(val)
+		val = valstr.SnakeCase("?", "", "#", "").ToLower()
 
 		o.(*options).elmID = val
 
@@ -164,6 +177,9 @@ func WithMod(modifier string) Option {
 			return NewDuplicateIDPropError("modifier", o.(*options).mod, modifier)
 		}
 
+		modifierstr := stringy.New(modifier)
+		modifier := modifierstr.SnakeCase("?", "", "#", "").ToLower()
+
 		o.(*options).mod = modifier
 
 		return nil
@@ -177,6 +193,9 @@ func WithModID(val string) Option {
 			return NewDuplicateIDPropError("modifier id", o.(*options).modID, val)
 		}
 
+		valstr := stringy.New(val)
+		val = valstr.SnakeCase("?", "", "#", "").ToLower()
+
 		o.(*options).modID = val
 
 		return nil
@@ -187,7 +206,7 @@ func WithModID(val string) Option {
 func WithProp(key, val string) Option {
 	return func(o Options) error {
 		o.(*options).propOrder = append(o.(*options).propOrder, key)
-		o.(*options).props[key] = val
+		o.(*options).props[stringy.New(key).SnakeCase("?", "", "#", "").ToLower()] = stringy.New(val).SnakeCase("?", "", "#", "").ToLower()
 
 		return nil
 	}
