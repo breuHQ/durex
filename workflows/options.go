@@ -22,7 +22,6 @@ package workflows
 import (
 	"strings"
 
-	"github.com/gobeam/stringy"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -107,16 +106,13 @@ func WithParent(parent workflow.Context) Option {
 }
 
 // WithBlock sets the block name.
-func WithBlock(block string) Option {
+func WithBlock(val string) Option {
 	return func(o Options) error {
 		if o.(*options).block != "" {
-			return NewDuplicateIDPropError("block", o.(*options).block, block)
+			return NewDuplicateIDPropError("block", o.(*options).block, val)
 		}
 
-		blockstr := stringy.New(block)
-		block := blockstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).block = block
+		o.(*options).block = format(val)
 
 		return nil
 	}
@@ -129,26 +125,20 @@ func WithBlockID(val string) Option {
 			return NewDuplicateIDPropError("blockID", o.(*options).blockID, val)
 		}
 
-		valstr := stringy.New(val)
-		val = valstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).blockID = val
+		o.(*options).blockID = format(val)
 
 		return nil
 	}
 }
 
 // WithElement sets the element name.
-func WithElement(element string) Option {
+func WithElement(val string) Option {
 	return func(o Options) error {
 		if o.(*options).elm != "" {
-			return NewDuplicateIDPropError("element", o.(*options).elm, element)
+			return NewDuplicateIDPropError("element", o.(*options).elm, val)
 		}
 
-		elementstr := stringy.New(element)
-		element := elementstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).elm = element
+		o.(*options).elm = format(val)
 
 		return nil
 	}
@@ -161,26 +151,20 @@ func WithElementID(val string) Option {
 			return NewDuplicateIDPropError("element id", o.(*options).elmID, val)
 		}
 
-		valstr := stringy.New(val)
-		val = valstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).elmID = val
+		o.(*options).elmID = format(val)
 
 		return nil
 	}
 }
 
 // WithMod sets the modifier name.
-func WithMod(modifier string) Option {
+func WithMod(val string) Option {
 	return func(o Options) error {
 		if o.(*options).mod != "" {
-			return NewDuplicateIDPropError("modifier", o.(*options).mod, modifier)
+			return NewDuplicateIDPropError("modifier", o.(*options).mod, val)
 		}
 
-		modifierstr := stringy.New(modifier)
-		modifier := modifierstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).mod = modifier
+		o.(*options).mod = format(val)
 
 		return nil
 	}
@@ -193,10 +177,7 @@ func WithModID(val string) Option {
 			return NewDuplicateIDPropError("modifier id", o.(*options).modID, val)
 		}
 
-		valstr := stringy.New(val)
-		val = valstr.SnakeCase("?", "", "#", "").ToLower()
-
-		o.(*options).modID = val
+		o.(*options).modID = format(val)
 
 		return nil
 	}
@@ -206,7 +187,7 @@ func WithModID(val string) Option {
 func WithProp(key, val string) Option {
 	return func(o Options) error {
 		o.(*options).propOrder = append(o.(*options).propOrder, key)
-		o.(*options).props[stringy.New(key).SnakeCase("?", "", "#", "").ToLower()] = stringy.New(val).SnakeCase("?", "", "#", "").ToLower()
+		o.(*options).props[format(key)] = format(val)
 
 		return nil
 	}
