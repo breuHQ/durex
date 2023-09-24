@@ -223,7 +223,7 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, sign
 	}
 
 	if opts.IsChild() {
-		return workflows.ErrParentNil
+		return ErrExternalWorkflowSignalAttempt
 	}
 
 	return q.client.SignalWorkflow(ctx, q.WorkflowID(opts), "", signalName, arg)
@@ -231,7 +231,7 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, sign
 
 func (q *queue) SignalExternalWorkflow(ctx workflow.Context, opts workflows.Options, signalName string, arg any) (workflow.Future, error) {
 	if !opts.IsChild() {
-		return nil, ErrChildWorkflowExecutionAttempt
+		return nil, workflows.ErrParentNil
 	}
 
 	return workflow.SignalExternalWorkflow(ctx, q.WorkflowID(opts), "", signalName, arg), nil
