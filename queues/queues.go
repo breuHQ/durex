@@ -268,6 +268,15 @@ func (q *queue) SignalWithStartWorkflow(
 	)
 }
 
+func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
+	attempts := opts.MaxAttempts()
+	if attempts != workflows.RetryForever && q.workflowMaxAttempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
+		attempts = q.workflowMaxAttempts
+	}
+
+	return &temporal.RetryPolicy{MaximumAttempts: attempts}
+}
+
 func (q *queue) CreateWorker() worker.Worker {
 	options := worker.Options{OnFatalError: func(err error) { panic(err) }}
 	return worker.New(q.client, q.Name().String(), options)
