@@ -188,7 +188,7 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn 
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
 			TaskQueue:   q.Name().String(),
-			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts},
+			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
 		},
 		fn,
 		payload...,
@@ -208,7 +208,7 @@ func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts workflows.Option
 
 	copts := workflow.ChildWorkflowOptions{
 		WorkflowID:  q.WorkflowID(opts),
-		RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts},
+		RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
 	}
 
 	ctx = workflow.WithChildOptions(ctx, copts)
@@ -261,7 +261,7 @@ func (q *queue) SignalWithStartWorkflow(
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
 			TaskQueue:   q.Name().String(),
-			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts},
+			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
 		},
 		fn,
 		payload...,

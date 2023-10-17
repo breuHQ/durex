@@ -36,6 +36,7 @@ type (
 		ParentWorkflowID() (string, error) // ParentWorkflowID returns the parent workflow id.
 		IDSuffix() string                  // IDSuffix santizes the suffix of the workflow id and then formats it as a string.
 		MaxAttempts() int32                // MaxAttempts returns the max attempts for the workflow.
+		IgnoredErrors() []string           // IgnoredErrors returns the list of errors that are ok to ignore.
 	}
 
 	// Option sets the specified options.
@@ -57,7 +58,8 @@ type (
 		props     props    // props is a map of id properties.
 		propOrder []string // propOrder is the order in which the properties are added.
 
-		maxattempts int32
+		maxattempts   int32
+		ignorederrors []string // ingorederrors is a list of errors that are ok to ignore.
 	}
 )
 
@@ -95,6 +97,11 @@ func (w *options) ParentWorkflowID() (string, error) {
 // MaxAttempts returns the max attempts for the workflow.
 func (w *options) MaxAttempts() int32 {
 	return w.maxattempts
+}
+
+// IgnoredErrors returns the list of errors that are ok to ignore.
+func (w *options) IgnoredErrors() []string {
+	return w.ignorederrors
 }
 
 // WithParent sets the parent workflow context.
@@ -201,6 +208,13 @@ func WithMaxAttempts(attempts int32) Option {
 	}
 }
 
+func WithIgnoredError(err string) Option {
+	return func(o Options) error {
+		o.(*options).ignorederrors = append(o.(*options).ignorederrors, err)
+		return nil
+	}
+}
+
 // NewOptions sets workflow options required to run a workflow like workflow id, max attempts, etc.
 //
 // The idempotent workflow ID Sometimes we need to signal the workflow from a completely disconnected
@@ -232,9 +246,10 @@ func NewOptions(opts ...Option) (Options, error) {
 	)
 
 	w := &options{
-		props:       make(props),
-		propOrder:   make([]string, 0),
-		maxattempts: RetryForever,
+		props:         make(props),
+		propOrder:     make([]string, 0),
+		maxattempts:   RetryForever,
+		ignorederrors: make([]string, 0),
 	}
 
 	for _, opt := range opts {
