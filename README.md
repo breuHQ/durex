@@ -5,6 +5,9 @@
 [![License](https://img.shields.io/github/license/breuHQ/go-temporal-tools)](./LICENSE)
 ![GitHub contributors](https://img.shields.io/github/contributors/breuHQ/go-temporal-tools)
 
+> [!WARNING]  
+> This is a work in porgress. The surface API can change without warning.
+
 ## 🚀 Install
 
 ```sh
@@ -12,8 +15,6 @@ go get go.breu.io/temporal-tools
 ```
 
 **Compatibility**: go >= 1.21
-
-- ⚠️ Work in Progress
 
 ## Why?
 
