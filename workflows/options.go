@@ -208,6 +208,7 @@ func WithMaxAttempts(attempts int32) Option {
 	}
 }
 
+// WithIgnoredError adds an error to the list of errors that are ok to ignore for the workflow.
 func WithIgnoredError(err string) Option {
 	return func(o Options) error {
 		o.(*options).ignorederrors = append(o.(*options).ignorederrors, err)
