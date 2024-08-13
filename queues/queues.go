@@ -125,7 +125,7 @@ type (
 		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal string, payload any) (WorkflowFuture, error)
 
 		// CreateWorker creates a worker against the queue.
-		CreateWorker() worker.Worker
+		CreateWorker(opts ...WorkerOption) worker.Worker
 	}
 
 	// QueueOption is the option for a queue.
@@ -275,8 +275,9 @@ func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
 	return &temporal.RetryPolicy{MaximumAttempts: attempts}
 }
 
-func (q *queue) CreateWorker() worker.Worker {
-	options := worker.Options{OnFatalError: func(err error) { panic(err) }}
+func (q *queue) CreateWorker(opts ...WorkerOption) worker.Worker {
+	options := NewWorkerOptions(opts...)
+
 	return worker.New(q.client, q.Name().String(), options)
 }
 

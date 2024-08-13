@@ -236,6 +236,8 @@ func WithIgnoredError(err string) Option {
 //	  WithModifierID("789"),
 //	  // Sometimes we need to over-ride max attempts. The default is workflows.RetryForever.
 //	  WithMaxAttempts(3),
+//	  // If we want to ignore an error, we can do so.
+//	  WithIgnoredError("SomeError"),
 //	)
 //
 //	id := opts.ID()
