@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/gobeam/stringy v0.0.7
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
 	go.temporal.io/api v1.32.0
 	go.temporal.io/sdk v1.26.1
@@ -14,7 +15,6 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect

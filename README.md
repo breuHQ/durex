@@ -2,6 +2,7 @@
 
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/breuHQ/go-temporal-tools)
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/breuHQ/go-temporal-tools)
+![Tests](https://img.shields.io/github/actions/workflow/status/breuHQ/go-temporal-tools/test.yml?label=test)
 [![License](https://img.shields.io/github/license/breuHQ/go-temporal-tools)](./LICENSE)
 ![GitHub contributors](https://img.shields.io/github/contributors/breuHQ/go-temporal-tools)
 
