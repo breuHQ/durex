@@ -227,3 +227,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/go,osx,linux,visualstudiocode,goland,windows
+dist/
+ctrf-report.json
