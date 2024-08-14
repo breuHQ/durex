@@ -107,3 +107,24 @@ func TestWithProp(t *testing.T) {
 	assert.Equal(t, "", parent)
 	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
+func TestWithPropMultiple(t *testing.T) {
+	workflow, _ := workflows.NewOptions(
+		workflows.WithProp("prop1", "value1"),
+		workflows.WithProp("prop2", "value2"),
+		workflows.WithProp("prop3", "value3"),
+	)
+
+	suffix := workflow.IDSuffix()
+
+	assert.Equal(t, "prop1.value1.prop2.value2.prop3.value3", suffix)
+}
+
+func TestWithPropEmptyValue(t *testing.T) {
+	workflow, _ := workflows.NewOptions(
+		workflows.WithProp("prop", ""),
+	)
+
+	suffix := workflow.IDSuffix()
+
+	assert.Equal(t, "prop", suffix)
+}
