@@ -90,7 +90,7 @@ type (
 		//  ); err != nil {
 		//    // handle error
 		//  }
-		SignalWorkflow(ctx context.Context, options workflows.Options, signalName string, payload any) error
+		SignalWorkflow(ctx context.Context, options workflows.Options, signal WorkflowSignal, payload any) error
 
 		// SignalWithStartWorkflow signals a workflow given the workflow ID, signal name and optional payload.
 		//
@@ -107,7 +107,7 @@ type (
 		//    payload..., // optional.
 		//  )
 		SignalWithStartWorkflow(
-			ctx context.Context, options workflows.Options, signal string, arg any, fn any, payload ...any,
+			ctx context.Context, options workflows.Options, signal WorkflowSignal, args any, fn any, payload ...any,
 		) (WorkflowRun, error)
 
 		// SignalExternalWorkflow signals a workflow given the workflow ID, signal name and optional payload.
@@ -122,7 +122,7 @@ type (
 		//    "signal-name",
 		//    payload,    // or nil
 		//  )
-		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal string, payload any) (WorkflowFuture, error)
+		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal WorkflowSignal, args any) (WorkflowFuture, error)
 
 		// CreateWorker creates a worker against the queue.
 		CreateWorker(opts ...WorkerOption) worker.Worker
@@ -169,7 +169,7 @@ func (q *queue) WorkflowID(options workflows.Options) string {
 
 func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn any, payload ...any) (WorkflowRun, error) {
 	attempts := opts.MaxAttempts()
-	if attempts != workflows.RetryForever && q.workflowMaxAttempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
+	if attempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
 		attempts = q.workflowMaxAttempts
 	}
 
@@ -215,7 +215,7 @@ func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts workflows.Option
 }
 
 // SignalWorkflow signals a workflow given the workflow ID, signal name and optional payload.
-func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, signalName string, arg any) error {
+func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, signal WorkflowSignal, args any) error {
 	if q.client == nil {
 		return ErrClientNil
 	}
@@ -224,11 +224,11 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, sign
 		return ErrExternalWorkflowSignalAttempt
 	}
 
-	return q.client.SignalWorkflow(ctx, q.WorkflowID(opts), "", signalName, arg)
+	return q.client.SignalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args)
 }
 
 func (q *queue) SignalWithStartWorkflow(
-	ctx context.Context, opts workflows.Options, sig string, arg any, fn any, payload ...any,
+	ctx context.Context, opts workflows.Options, signal WorkflowSignal, args any, fn any, payload ...any,
 ) (WorkflowRun, error) {
 	if q.client == nil {
 		return nil, ErrClientNil
@@ -246,8 +246,8 @@ func (q *queue) SignalWithStartWorkflow(
 	return q.client.SignalWithStartWorkflow(
 		ctx,
 		q.WorkflowID(opts),
-		sig,
-		arg,
+		signal.String(),
+		args,
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
 			TaskQueue:   q.Name().String(),
@@ -258,12 +258,14 @@ func (q *queue) SignalWithStartWorkflow(
 	)
 }
 
-func (q *queue) SignalExternalWorkflow(ctx workflow.Context, opts workflows.Options, signalName string, arg any) (WorkflowFuture, error) {
+func (q *queue) SignalExternalWorkflow(
+	ctx workflow.Context, opts workflows.Options, signal WorkflowSignal, args any,
+) (WorkflowFuture, error) {
 	if !opts.IsChild() {
 		return nil, workflows.ErrParentNil
 	}
 
-	return workflow.SignalExternalWorkflow(ctx, q.WorkflowID(opts), "", signalName, arg), nil
+	return workflow.SignalExternalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args), nil
 }
 
 func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
