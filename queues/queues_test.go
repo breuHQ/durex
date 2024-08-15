@@ -74,9 +74,49 @@ func (s *QueueTestSuite) TestExecuteWorkflow() {
 	}
 
 	// Execute the workflow
-	_, _ = s.queue.ExecuteWorkflow(ctx, opts, fn, "hello")
+	_, err := s.queue.ExecuteWorkflow(ctx, opts, fn, "hello")
+
+	s.NoError(err)
 
 	expected := "hello world"
+	result := ""
+
+	_ = s.env.GetWorkflowResult(&result)
+
+	s.Equal(expected, result)
+}
+
+func (s *QueueTestSuite) TestExecuteChildWorkflow() {
+	ctx := context.Background()
+	parent_id := uuid.New()
+	child_id := uuid.New()
+
+	opts, _ := workflows.NewOptions(
+		workflows.WithBlock("parent"),
+		workflows.WithBlockID(parent_id.String()),
+	)
+
+	child := func(ctx workflow.Context, payload string) (string, error) { return payload + "child", nil }
+	parent := func(ctx workflow.Context, payload string) (string, error) {
+		opts, _ := workflows.NewOptions(
+			workflows.WithParent(ctx),
+			workflows.WithBlock(child_id.String()),
+		)
+
+		result := ""
+		f, _ := s.queue.ExecuteChildWorkflow(ctx, opts, child, payload)
+
+		_ = f.Get(ctx, &result)
+
+		return result, nil
+	}
+
+	s.env.RegisterWorkflow(child)
+	_, err := s.queue.ExecuteWorkflow(ctx, opts, parent, "parent/")
+
+	s.NoError(err)
+
+	expected := "parent/child"
 	result := ""
 
 	_ = s.env.GetWorkflowResult(&result)
