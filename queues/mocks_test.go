@@ -33,8 +33,8 @@ func (m *MockClient) GetWorkflow(ctx context.Context, workflowID string, runID s
 	return &mockWorkflowRun{env: m.env}
 }
 
-func (m *MockClient) SignalWorkflow(ctx context.Context, workflowID string, runID string, signalName string, arg any) error {
-	m.env.SignalWorkflow(signalName, arg)
+func (m *MockClient) SignalWorkflow(ctx context.Context, workflowID string, runID string, signal string, arg any) error {
+	m.env.SignalWorkflow(signal, arg)
 
 	return nil
 }

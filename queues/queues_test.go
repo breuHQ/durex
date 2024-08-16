@@ -3,6 +3,7 @@ package queues_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -117,6 +118,47 @@ func (s *QueueTestSuite) TestExecuteChildWorkflow() {
 	s.NoError(err)
 
 	expected := "parent/child"
+	result := ""
+
+	_ = s.env.GetWorkflowResult(&result)
+
+	s.Equal(expected, result)
+}
+
+func (s *QueueTestSuite) TestSignalWorkflow() {
+	ctx := context.Background()
+	id := uuid.New()
+	name := queues.WorkflowSignal("signal")
+	opts, _ := workflows.NewOptions(
+		workflows.WithBlock("signal"),
+		workflows.WithBlockID(id.String()),
+	)
+
+	fn := func(ctx workflow.Context, payload string) (string, error) {
+		selector := workflow.NewSelector(ctx)
+		signal := workflow.GetSignalChannel(ctx, name.String())
+		result := ""
+
+		selector.AddReceive(signal, func(channel workflow.ReceiveChannel, more bool) {
+			channel.Receive(ctx, &result)
+
+			result = payload + result
+		})
+
+		selector.Select(ctx)
+
+		return result, nil
+	}
+
+	s.env.RegisterDelayedCallback(func() {
+		_ = s.queue.SignalWorkflow(ctx, opts, name, "world")
+	}, 30*time.Second)
+
+	_, err := s.queue.ExecuteWorkflow(ctx, opts, fn, "hello ")
+
+	s.NoError(err)
+
+	expected := "hello world"
 	result := ""
 
 	_ = s.env.GetWorkflowResult(&result)

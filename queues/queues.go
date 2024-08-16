@@ -168,11 +168,6 @@ func (q *queue) WorkflowID(options workflows.Options) string {
 }
 
 func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn any, payload ...any) (WorkflowRun, error) {
-	attempts := opts.MaxAttempts()
-	if attempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
-		attempts = q.workflowMaxAttempts
-	}
-
 	if opts.IsChild() {
 		return nil, ErrChildWorkflowExecutionAttempt
 	}
@@ -186,7 +181,7 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn 
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
 			TaskQueue:   q.Name().String(),
-			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
+			RetryPolicy: q.RetryPolicy(opts),
 		},
 		fn,
 		payload...,
@@ -194,19 +189,13 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn 
 }
 
 func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts workflows.Options, fn any, payload ...any) (ChildWorkflowFuture, error) {
-	attempts := opts.MaxAttempts()
-
 	if !opts.IsChild() {
 		return nil, workflows.ErrParentNil
 	}
 
-	if attempts != workflows.RetryForever && q.workflowMaxAttempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
-		attempts = q.workflowMaxAttempts
-	}
-
 	copts := workflow.ChildWorkflowOptions{
 		WorkflowID:  q.WorkflowID(opts),
-		RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
+		RetryPolicy: q.RetryPolicy(opts),
 	}
 
 	ctx = workflow.WithChildOptions(ctx, copts)
@@ -238,11 +227,6 @@ func (q *queue) SignalWithStartWorkflow(
 		return nil, workflows.ErrParentNil
 	}
 
-	attempts := opts.MaxAttempts()
-	if attempts != workflows.RetryForever && q.workflowMaxAttempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
-		attempts = q.workflowMaxAttempts
-	}
-
 	return q.client.SignalWithStartWorkflow(
 		ctx,
 		q.WorkflowID(opts),
@@ -251,7 +235,7 @@ func (q *queue) SignalWithStartWorkflow(
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
 			TaskQueue:   q.Name().String(),
-			RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()},
+			RetryPolicy: q.RetryPolicy(opts),
 		},
 		fn,
 		payload...,
@@ -270,11 +254,13 @@ func (q *queue) SignalExternalWorkflow(
 
 func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
 	attempts := opts.MaxAttempts()
-	if attempts != workflows.RetryForever && q.workflowMaxAttempts != workflows.RetryForever && q.workflowMaxAttempts > attempts {
+	if attempts < workflows.RetryForever &&
+		q.workflowMaxAttempts < workflows.RetryForever &&
+		q.workflowMaxAttempts > attempts {
 		attempts = q.workflowMaxAttempts
 	}
 
-	return &temporal.RetryPolicy{MaximumAttempts: attempts}
+	return &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()}
 }
 
 func (q *queue) CreateWorker(opts ...WorkerOption) worker.Worker {
