@@ -141,11 +141,7 @@ func (m *MockClient) CheckHealth(ctx context.Context, request *client.CheckHealt
 	return &client.CheckHealthResponse{}, nil
 }
 
-func (m *MockClient) UpdateWorkflow(ctx context.Context, workflowID string, workflowRunID string, updateName string, args ...any) (client.WorkflowUpdateHandle, error) {
-	return nil, nil
-}
-
-func (m *MockClient) UpdateWorkflowWithOptions(ctx context.Context, request *client.UpdateWorkflowWithOptionsRequest) (client.WorkflowUpdateHandle, error) {
+func (m *MockClient) UpdateWorkflow(ctx context.Context, options client.UpdateWorkflowOptions) (client.WorkflowUpdateHandle, error) {
 	return nil, nil
 }
 
@@ -166,6 +162,18 @@ func (m *MockClient) ScheduleClient() client.ScheduleClient {
 }
 
 func (m *MockClient) Close() {}
+
+func (m *MockClient) DescribeTaskQueueEnhanced(ctx context.Context, options client.DescribeTaskQueueEnhancedOptions) (client.TaskQueueDescription, error) {
+	return client.TaskQueueDescription{}, nil
+}
+
+func (m *MockClient) GetWorkerVersioningRules(ctx context.Context, options client.GetWorkerVersioningOptions) (*client.WorkerVersioningRules, error) {
+	return nil, nil
+}
+
+func (m *MockClient) UpdateWorkerVersioningRules(ctx context.Context, options client.UpdateWorkerVersioningRulesOptions) (*client.WorkerVersioningRules, error) {
+	return nil, nil
+}
 
 type mockWorkflowRun struct {
 	env *testsuite.TestWorkflowEnvironment
