@@ -40,6 +40,8 @@ type (
 		// Name gets the name of the queue as string.
 		Name() Name
 
+		String() string
+
 		// Prefix gets the prefix of the queue as string.
 		Prefix() string
 
@@ -146,6 +148,10 @@ type (
 
 func (q Name) String() string {
 	return string(q)
+}
+
+func (q *queue) String() string {
+	return q.name.String()
 }
 
 func (q *queue) Name() Name {
