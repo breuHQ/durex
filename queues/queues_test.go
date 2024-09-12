@@ -10,8 +10,8 @@ import (
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 
-	"go.breu.io/temporal-tools/queues"
-	"go.breu.io/temporal-tools/workflows"
+	"go.breu.io/durex/queues"
+	"go.breu.io/durex/workflows"
 )
 
 type (

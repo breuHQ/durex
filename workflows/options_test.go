@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"go.breu.io/temporal-tools/workflows"
+	"go.breu.io/durex/workflows"
 )
 
 func TestWorkflowMod(t *testing.T) {

@@ -12,7 +12,7 @@
 ## 🚀 Install
 
 ```sh
-go get go.breu.io/temporal-tools
+go get go.breu.io/durex
 ```
 
 **Compatibility**: go >= 1.21
@@ -207,7 +207,7 @@ package shared
 import (
   "sync"
 
-  "go.breu.io/temporal-tools/queues"
+  "go.breu.io/durex/queues"
 )
 
 var (
@@ -248,7 +248,7 @@ import (
   "github.com/google/uuid"
   "go.temporal.io/sdk/workflow"
 
-  "go.breu.io/temporal-tools/workflows"
+  "go.breu.io/durex/workflows"
 )
 
 func main() {
