@@ -1,4 +1,4 @@
-module go.breu.io/temporal-tools
+module go.breu.io/durex
 
 go 1.21.0
 

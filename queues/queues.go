@@ -28,7 +28,7 @@ import (
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 
-	"go.breu.io/temporal-tools/workflows"
+	"go.breu.io/durex/workflows"
 )
 
 type (
