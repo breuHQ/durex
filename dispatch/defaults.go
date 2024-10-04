@@ -1,3 +1,4 @@
+// Package dispatch provides helper functions for configuring workflow.Context objects with default activity options.
 package dispatch
 
 import (

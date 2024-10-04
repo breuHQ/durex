@@ -1,22 +1,3 @@
-// Copyright (c) 2023 Breu Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
-// this software and associated documentation files (the "Software"), to deal in
-// the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-// the Software, and to permit persons to whom the Software is furnished to do so,
-// subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 package workflows
 
 import (
@@ -45,33 +26,43 @@ type (
 	// props defines the interface for creating id properties.
 	props map[string]string
 
-	// optionProvider defines the interface for creating workflow options.
 	options struct {
-		parent workflow.Context
+		parent_context workflow.Context // The parent workflow context.
 
-		block     string
-		blockID   string
-		elm       string
-		elmID     string
-		mod       string
-		modID     string
-		props     props    // props is a map of id properties.
-		propOrder []string // propOrder is the order in which the properties are added.
-
-		maxattempts   int32
-		ignorederrors []string // ingorederrors is a list of errors that are ok to ignore.
+		ParentID       string   `json:"parent"`          // The parent workflow ID.
+		Block          string   `json:"block"`           // The block name.
+		BlockID        string   `json:"block_id"`        // The block identifier.
+		Element        string   `json:"element"`         // The element name.
+		ElementID      string   `json:"element_id"`      // The element identifier.
+		Mod            string   `json:"mod"`             // The modifier name.
+		ModID          string   `json:"mod_id"`          // The modifier identifier.
+		Props          props    `json:"props"`           // The properties associated with the workflow.
+		Order          []string `json:"order"`           // The order of execution for the workflow elements.
+		MaximumAttempt int32    `json:"maximum_attempt"` // The maximum number of attempts for the workflow.
+		IgnoreErrors   []string `json:"ignore_errors"`   // A list of errors to ignore during the workflow execution.
 	}
 )
 
+// IsChild returns true if the workflow id is a child workflow id.
 func (w *options) IsChild() bool {
-	return w.parent != nil
+	return w.ParentID != ""
+}
+
+func (w *options) ID() string {
+	id := w.IDSuffix()
+
+	if w.IsChild() {
+		return w.ParentID + "." + id
+	}
+
+	return id
 }
 
 // IDSuffix sanitizes the suffix and returns it.
 func (w *options) IDSuffix() string {
-	parts := []string{w.block, w.blockID, w.elm, w.elmID, w.mod, w.modID}
-	for _, key := range w.propOrder {
-		parts = append(parts, key, w.props[key])
+	parts := []string{w.Block, w.BlockID, w.Element, w.ElementID, w.Mod, w.ModID}
+	for _, key := range w.Order {
+		parts = append(parts, key, w.Props[key])
 	}
 
 	sanitized := make([]string, 0)
@@ -86,28 +77,29 @@ func (w *options) IDSuffix() string {
 	return strings.Join(sanitized, ".")
 }
 
+// ParentWorkflowID returns the parent workflow id.
 func (w *options) ParentWorkflowID() (string, error) {
-	if w.parent == nil {
+	if w.parent_context == nil {
 		return "", ErrParentNil
 	}
 
-	return workflow.GetInfo(w.parent).WorkflowExecution.ID, nil
+	return workflow.GetInfo(w.parent_context).WorkflowExecution.ID, nil
 }
 
 // MaxAttempts returns the max attempts for the workflow.
 func (w *options) MaxAttempts() int32 {
-	return w.maxattempts
+	return w.MaximumAttempt
 }
 
 // IgnoredErrors returns the list of errors that are ok to ignore.
 func (w *options) IgnoredErrors() []string {
-	return w.ignorederrors
+	return w.IgnoreErrors
 }
 
 // WithParent sets the parent workflow context.
 func WithParent(parent workflow.Context) Option {
 	return func(o Options) error {
-		o.(*options).parent = parent
+		o.(*options).ParentID = workflow.GetInfo(parent).WorkflowExecution.ID
 		return nil
 	}
 }
@@ -115,11 +107,11 @@ func WithParent(parent workflow.Context) Option {
 // WithBlock sets the block name.
 func WithBlock(val string) Option {
 	return func(o Options) error {
-		if o.(*options).block != "" {
-			return NewDuplicateIDPropError("block", o.(*options).block, val)
+		if o.(*options).Block != "" {
+			return NewDuplicateIDPropError("block", o.(*options).Block, val)
 		}
 
-		o.(*options).block = format(val)
+		o.(*options).Block = sanitize(val)
 
 		return nil
 	}
@@ -128,11 +120,11 @@ func WithBlock(val string) Option {
 // WithBlockID sets the block value.
 func WithBlockID(val string) Option {
 	return func(o Options) error {
-		if o.(*options).blockID != "" {
-			return NewDuplicateIDPropError("blockID", o.(*options).blockID, val)
+		if o.(*options).BlockID != "" {
+			return NewDuplicateIDPropError("blockID", o.(*options).BlockID, val)
 		}
 
-		o.(*options).blockID = format(val)
+		o.(*options).BlockID = sanitize(val)
 
 		return nil
 	}
@@ -141,11 +133,11 @@ func WithBlockID(val string) Option {
 // WithElement sets the element name.
 func WithElement(val string) Option {
 	return func(o Options) error {
-		if o.(*options).elm != "" {
-			return NewDuplicateIDPropError("element", o.(*options).elm, val)
+		if o.(*options).Element != "" {
+			return NewDuplicateIDPropError("element", o.(*options).Element, val)
 		}
 
-		o.(*options).elm = format(val)
+		o.(*options).Element = sanitize(val)
 
 		return nil
 	}
@@ -154,11 +146,11 @@ func WithElement(val string) Option {
 // WithElementID sets the element value.
 func WithElementID(val string) Option {
 	return func(o Options) error {
-		if o.(*options).elmID != "" {
-			return NewDuplicateIDPropError("element id", o.(*options).elmID, val)
+		if o.(*options).ElementID != "" {
+			return NewDuplicateIDPropError("element id", o.(*options).ElementID, val)
 		}
 
-		o.(*options).elmID = format(val)
+		o.(*options).ElementID = sanitize(val)
 
 		return nil
 	}
@@ -167,11 +159,11 @@ func WithElementID(val string) Option {
 // WithMod sets the modifier name.
 func WithMod(val string) Option {
 	return func(o Options) error {
-		if o.(*options).mod != "" {
-			return NewDuplicateIDPropError("modifier", o.(*options).mod, val)
+		if o.(*options).Mod != "" {
+			return NewDuplicateIDPropError("modifier", o.(*options).Mod, val)
 		}
 
-		o.(*options).mod = format(val)
+		o.(*options).Mod = sanitize(val)
 
 		return nil
 	}
@@ -180,11 +172,11 @@ func WithMod(val string) Option {
 // WithModID sets the modifier value.
 func WithModID(val string) Option {
 	return func(o Options) error {
-		if o.(*options).modID != "" {
-			return NewDuplicateIDPropError("modifier id", o.(*options).modID, val)
+		if o.(*options).ModID != "" {
+			return NewDuplicateIDPropError("modifier id", o.(*options).ModID, val)
 		}
 
-		o.(*options).modID = format(val)
+		o.(*options).ModID = sanitize(val)
 
 		return nil
 	}
@@ -193,8 +185,8 @@ func WithModID(val string) Option {
 // WithProp sets the prop given a key & value.
 func WithProp(key, val string) Option {
 	return func(o Options) error {
-		o.(*options).propOrder = append(o.(*options).propOrder, key)
-		o.(*options).props[format(key)] = format(val)
+		o.(*options).Order = append(o.(*options).Order, key)
+		o.(*options).Props[sanitize(key)] = sanitize(val)
 
 		return nil
 	}
@@ -203,7 +195,7 @@ func WithProp(key, val string) Option {
 // WithMaxAttempts sets the max attempts for the workflow.
 func WithMaxAttempts(attempts int32) Option {
 	return func(o Options) error {
-		o.(*options).maxattempts = attempts
+		o.(*options).MaximumAttempt = attempts
 		return nil
 	}
 }
@@ -211,21 +203,20 @@ func WithMaxAttempts(attempts int32) Option {
 // WithIgnoredError adds an error to the list of errors that are ok to ignore for the workflow.
 func WithIgnoredError(err string) Option {
 	return func(o Options) error {
-		o.(*options).ignorederrors = append(o.(*options).ignorederrors, err)
+		o.(*options).IgnoreErrors = append(o.(*options).IgnoreErrors, err)
 		return nil
 	}
 }
 
 // NewOptions sets workflow options required to run a workflow like workflow id, max attempts, etc.
 //
-// The idempotent workflow ID Sometimes we need to signal the workflow from a completely disconnected
-// part of the application. For us, it is important to arrive at the same workflow ID regardless of the conditions.
-// We try to follow the block, element, modifier pattern popularized by advocates of mantainable CSS. For more info,
-// https://getbem.com.
+// The idempotent workflow ID Sometimes we need to signal the workflow from a completely disconnected part of the
+// application. For us, it is important to arrive at the same workflow ID regardless of the conditions. We try to follow
+// the block, element, modifier pattern popularized by advocates of maintainable CSS. For more info,
+// https://getbem.com/.
 //
-// Example:
-// For the block github with installation id 123, the element being the repository with id 456, and the modifier being the
-// pull request with id 789, we would call
+// Example: For the block github with installation id 123, the element being the repository with id 456, and the
+// modifier being the pull request with id 789, we would call
 //
 //	opts := NewOptions(
 //	  WithBlock("github"),
@@ -249,10 +240,10 @@ func NewOptions(opts ...Option) (Options, error) {
 	)
 
 	w := &options{
-		props:         make(props),
-		propOrder:     make([]string, 0),
-		maxattempts:   RetryForever,
-		ignorederrors: make([]string, 0),
+		Props:          make(props),
+		Order:          make([]string, 0),
+		MaximumAttempt: RetryForever,
+		IgnoreErrors:   make([]string, 0),
 	}
 
 	for _, opt := range opts {
