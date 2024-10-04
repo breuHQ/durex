@@ -22,6 +22,7 @@ package queues
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -39,6 +40,8 @@ type (
 	Queue interface {
 		// Name gets the name of the queue as string.
 		Name() Name
+
+		String() string
 
 		// Prefix gets the prefix of the queue as string.
 		Prefix() string
@@ -125,7 +128,7 @@ type (
 		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal WorkflowSignal, args any) (WorkflowFuture, error)
 
 		// CreateWorker creates a worker against the queue.
-		CreateWorker(opts ...WorkerOption) worker.Worker
+		CreateWorker(opts ...WorkerOption)
 	}
 
 	// QueueOption is the option for a queue.
@@ -141,11 +144,18 @@ type (
 		workflowMaxAttempts int32  // The maximum number of attempts for a workflow.
 
 		client client.Client // The temporal client.
+
+		once   sync.Once     // The sync.Once for the queue.
+		worker worker.Worker // The temporal worker.
 	}
 )
 
 func (q Name) String() string {
 	return string(q)
+}
+
+func (q *queue) String() string {
+	return q.name.String()
 }
 
 func (q *queue) Name() Name {
@@ -157,14 +167,14 @@ func (q *queue) Prefix() string {
 }
 
 func (q *queue) WorkflowID(options workflows.Options) string {
-	pfix := ""
+	prefix := ""
 	if options.IsChild() {
-		pfix, _ = options.ParentWorkflowID()
+		prefix, _ = options.ParentWorkflowID()
 	} else {
-		pfix = q.Prefix()
+		prefix = q.Prefix()
 	}
 
-	return fmt.Sprintf("%s.%s", pfix, options.IDSuffix())
+	return fmt.Sprintf("%s.%s", prefix, options.IDSuffix())
 }
 
 func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn any, payload ...any) (WorkflowRun, error) {
@@ -263,10 +273,30 @@ func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
 	return &temporal.RetryPolicy{MaximumAttempts: attempts, NonRetryableErrorTypes: opts.IgnoredErrors()}
 }
 
-func (q *queue) CreateWorker(opts ...WorkerOption) worker.Worker {
-	options := NewWorkerOptions(opts...)
+func (q *queue) CreateWorker(opts ...WorkerOption) {
+	q.once.Do(func() {
+		options := NewWorkerOptions(opts...)
 
-	return worker.New(q.client, q.Name().String(), options)
+		q.worker = worker.New(q.client, q.Name().String(), options)
+	})
+}
+
+func (q *queue) Start(ctx context.Context) error {
+	if q.worker == nil {
+		return ErrWorkerNil
+	}
+
+	return q.worker.Start()
+}
+
+func (q *queue) Stop(ctx context.Context) error {
+	if q.worker == nil {
+		return ErrWorkerNil
+	}
+
+	q.worker.Stop()
+
+	return nil
 }
 
 // WithName sets the queue name and the prefix for the workflow ID.

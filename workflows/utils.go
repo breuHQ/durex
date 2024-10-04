@@ -7,16 +7,16 @@ import (
 )
 
 var (
-	uuidrxstr = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" // taken from github.com/go-playground/validator
+	uuid = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" // taken from github.com/go-playground/validator
 )
 
 var (
-	uuidrx = regexp.MustCompile(uuidrxstr)
+	re_uuid = regexp.MustCompile(uuid)
 )
 
-// format sanitizes a string and returns it.
-func format(s string) string {
-	if uuidrx.MatchString(s) {
+// sanitize sanitizes a string and returns it.
+func sanitize(s string) string {
+	if re_uuid.MatchString(s) {
 		return s
 	}
 
