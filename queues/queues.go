@@ -25,6 +25,7 @@ import (
 	"sync"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
@@ -127,8 +128,23 @@ type (
 		//  )
 		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal WorkflowSignal, args any) (WorkflowFuture, error)
 
+		// QueryWorkflow queries a workflow given the workflow ID, query name and optional payload.
+		QueryWorkflow(ctx context.Context, options workflows.Options, query WorkflowSignal, args ...any) (converter.EncodedValue, error)
+
 		// CreateWorker creates a worker against the queue.
 		CreateWorker(opts ...WorkerOption)
+
+		// Start starts the worker against the queue.
+		Start() error
+
+		// Shutdown shuts down the worker against the queue.
+		Shutdown(context.Context) error
+
+		// RegisterWorkflow registers a workflow against the queue. It is a wrapper around the worker.RegisterWorkflow.
+		RegisterWorkflow(any)
+
+		// RegisterActivity registers an activity against the queue. It is wrapper around the worker.RegisterActivity.
+		RegisterActivity(any)
 	}
 
 	// QueueOption is the option for a queue.
@@ -262,6 +278,16 @@ func (q *queue) SignalExternalWorkflow(
 	return workflow.SignalExternalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args), nil
 }
 
+func (q *queue) QueryWorkflow(
+	ctx context.Context, options workflows.Options, query WorkflowSignal, args ...any,
+) (converter.EncodedValue, error) {
+	if q.client == nil {
+		return nil, ErrClientNil
+	}
+
+	return q.client.QueryWorkflow(ctx, q.WorkflowID(options), "", query.String(), args...)
+}
+
 func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
 	attempts := opts.MaxAttempts()
 	if attempts < workflows.RetryForever &&
@@ -281,7 +307,7 @@ func (q *queue) CreateWorker(opts ...WorkerOption) {
 	})
 }
 
-func (q *queue) Start(ctx context.Context) error {
+func (q *queue) Start() error {
 	if q.worker == nil {
 		return ErrWorkerNil
 	}
@@ -289,7 +315,7 @@ func (q *queue) Start(ctx context.Context) error {
 	return q.worker.Start()
 }
 
-func (q *queue) Stop(ctx context.Context) error {
+func (q *queue) Shutdown(ctx context.Context) error {
 	if q.worker == nil {
 		return ErrWorkerNil
 	}
@@ -297,6 +323,14 @@ func (q *queue) Stop(ctx context.Context) error {
 	q.worker.Stop()
 
 	return nil
+}
+
+func (q *queue) RegisterWorkflow(fn any) {
+	q.worker.RegisterWorkflow(fn)
+}
+
+func (q *queue) RegisterActivity(fn any) {
+	q.worker.RegisterActivity(fn)
 }
 
 // WithName sets the queue name and the prefix for the workflow ID.
