@@ -30,7 +30,7 @@ import (
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 
-	"go.breu.io/durex/workflows"
+	wrk "go.breu.io/durex/workflows"
 )
 
 type (
@@ -48,11 +48,11 @@ type (
 		Prefix() string
 
 		// WorkflowID sanitzes the workflow ID given the workflows.Options.
-		WorkflowID(options workflows.Options) string
+		WorkflowID(opts wrk.Options) string
 
 		// ExecuteWorkflow executes a workflow given the context, workflows.Options, workflow function or function name, and
-		// optional payload.
-		// Lets say, we have a queue called "default", we can either pass in the workflow function or the function name.
+		// optional payload. Lets say, we have a queue called "default", we can either pass in the workflow function or the
+		// function name.
 		//
 		//  q := queues.New(queues.WithName("default"), queues.WithClient(client))
 		//  q.ExecuteWorkflow(
@@ -64,10 +64,11 @@ type (
 		//    WorkflowFn, // or "WorkflowFunctionName"
 		//    payload...,    // optional.
 		//  )
-		ExecuteWorkflow(ctx context.Context, options workflows.Options, fn any, payload ...any) (WorkflowRun, error)
+		ExecuteWorkflow(ctx context.Context, opts wrk.Options, fn any, payload ...any) (WorkflowRun, error)
 
-		// ExecuteChildWorkflow executes a child workflow given the parent workflow context, workflows.Options,
-		// workflow function or function name and optional payload. It must be executed from within a workflow.
+		// ExecuteChildWorkflow executes a child workflow given the parent workflow context, workflows.Options, workflow
+		// function or function name and optional payload. It must be executed from within a workflow.
+		//
 		//  future, err := q.ExecuteChildWorkflow(
 		//    ctx,
 		//    workflows.NewOptions(
@@ -78,7 +79,7 @@ type (
 		//    WorkflowFn,    // or "WorkflowFunctionName"
 		//    payload...,    // optional.
 		//  )
-		ExecuteChildWorkflow(ctx workflow.Context, options workflows.Options, fn any, payload ...any) (ChildWorkflowFuture, error)
+		ExecuteChildWorkflow(ctx workflow.Context, opts wrk.Options, fn any, payload ...any) (ChildWorkflowFuture, error)
 
 		// SignalWorkflow signals a workflow given the workflow ID, signal name and optional payload.
 		//
@@ -94,7 +95,7 @@ type (
 		//  ); err != nil {
 		//    // handle error
 		//  }
-		SignalWorkflow(ctx context.Context, options workflows.Options, signal WorkflowSignal, payload any) error
+		SignalWorkflow(ctx context.Context, opts wrk.Options, signal Signal, payload any) error
 
 		// SignalWithStartWorkflow signals a workflow given the workflow ID, signal name and optional payload.
 		//
@@ -110,9 +111,7 @@ type (
 		//    WorkflowFn, // or "WorkflowFunctionName"
 		//    payload..., // optional.
 		//  )
-		SignalWithStartWorkflow(
-			ctx context.Context, options workflows.Options, signal WorkflowSignal, args any, fn any, payload ...any,
-		) (WorkflowRun, error)
+		SignalWithStartWorkflow(ctx context.Context, opts wrk.Options, signal Signal, args any, fn any, payload ...any) (WorkflowRun, error)
 
 		// SignalExternalWorkflow signals a workflow given the workflow ID, signal name and optional payload.
 		//
@@ -126,15 +125,41 @@ type (
 		//    "signal-name",
 		//    payload,    // or nil
 		//  )
-		SignalExternalWorkflow(ctx workflow.Context, options workflows.Options, signal WorkflowSignal, args any) (WorkflowFuture, error)
+		SignalExternalWorkflow(ctx workflow.Context, opts wrk.Options, signal Signal, args any) (WorkflowFuture, error)
 
-		// QueryWorkflow queries a workflow given the workflow ID, query name and optional payload.
-		QueryWorkflow(ctx context.Context, options workflows.Options, query WorkflowSignal, args ...any) (converter.EncodedValue, error)
+		// QueryWorkflow queries a workflow given the workflow opts, query name and optional arguments.
+		//
+		//  result, err := q.QueryWorkflow(
+		//    ctx,
+		//    workflows.NewOptions(
+		//      workflows.WithWorkflowID("my-workflow-id"),
+		//    ),
+		//    Signal("query-name"),
+		//    arg1, arg2, // Optional arguments passed to the query function.
+		//  )
+		//
+		//  if err != nil {
+		//    // handle error
+		//  }
+		//  // Decode the result.
+		QueryWorkflow(ctx context.Context, opts wrk.Options, query Query, args ...any) (converter.EncodedValue, error)
 
-		// CreateWorker creates a worker against the queue.
+		// CreateWorker configures the worker for the queue.
+		//
+		// This function configures the worker responsible for executing registered workflows and activities.  It uses a
+		// builder pattern, with helper functions prefixed by queues.WithWorkerOption{Option}, where {Option} corresponds to
+		// a field in Temporal's worker.Option. This allows configuring worker behavior at runtime, such as setting maximum
+		// concurrent tasks, enabling sessions etc.  The worker is a singleton, meaning only one worker can be created per
+		// queue. Call this function *before* registering workflows and activities (queues.RegisterWorkflow and
+		// queues.RegisterActivity) to ensure correct association.
+		//
+		//	q := queues.New(queues.WithName("my-queue"), queues.WithClient(client))
+		//	q.CreateWorker(
+		//		queues.WithWorkerOptionEnableSessionWorker(true), // Enable session worker.
+		//	)
 		CreateWorker(opts ...WorkerOption)
 
-		// Start starts the worker against the queue.
+		// Start starts the worker against the queue. CreateWorker must be called before calling this function.
 		Start() error
 
 		// Shutdown shuts down the worker against the queue.
@@ -182,18 +207,18 @@ func (q *queue) Prefix() string {
 	return q.prefix
 }
 
-func (q *queue) WorkflowID(options workflows.Options) string {
+func (q *queue) WorkflowID(opts wrk.Options) string {
 	prefix := ""
-	if options.IsChild() {
-		prefix, _ = options.ParentWorkflowID()
+	if opts.IsChild() {
+		prefix = opts.ParentWorkflowID()
 	} else {
 		prefix = q.Prefix()
 	}
 
-	return fmt.Sprintf("%s.%s", prefix, options.IDSuffix())
+	return fmt.Sprintf("%s.%s", prefix, opts.IDSuffix())
 }
 
-func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn any, payload ...any) (WorkflowRun, error) {
+func (q *queue) ExecuteWorkflow(ctx context.Context, opts wrk.Options, fn any, payload ...any) (WorkflowRun, error) {
 	if opts.IsChild() {
 		return nil, ErrChildWorkflowExecutionAttempt
 	}
@@ -214,9 +239,9 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts workflows.Options, fn 
 	)
 }
 
-func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts workflows.Options, fn any, payload ...any) (ChildWorkflowFuture, error) {
+func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts wrk.Options, fn any, payload ...any) (ChildWorkflowFuture, error) {
 	if !opts.IsChild() {
-		return nil, workflows.ErrParentNil
+		return nil, wrk.ErrParentNil
 	}
 
 	copts := workflow.ChildWorkflowOptions{
@@ -230,7 +255,7 @@ func (q *queue) ExecuteChildWorkflow(ctx workflow.Context, opts workflows.Option
 }
 
 // SignalWorkflow signals a workflow given the workflow ID, signal name and optional payload.
-func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, signal WorkflowSignal, args any) error {
+func (q *queue) SignalWorkflow(ctx context.Context, opts wrk.Options, signal Signal, args any) error {
 	if q.client == nil {
 		return ErrClientNil
 	}
@@ -243,14 +268,14 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts workflows.Options, sign
 }
 
 func (q *queue) SignalWithStartWorkflow(
-	ctx context.Context, opts workflows.Options, signal WorkflowSignal, args any, fn any, payload ...any,
+	ctx context.Context, opts wrk.Options, signal Signal, args any, fn any, payload ...any,
 ) (WorkflowRun, error) {
 	if q.client == nil {
 		return nil, ErrClientNil
 	}
 
 	if opts.IsChild() {
-		return nil, workflows.ErrParentNil
+		return nil, wrk.ErrParentNil
 	}
 
 	return q.client.SignalWithStartWorkflow(
@@ -268,30 +293,28 @@ func (q *queue) SignalWithStartWorkflow(
 	)
 }
 
-func (q *queue) SignalExternalWorkflow(
-	ctx workflow.Context, opts workflows.Options, signal WorkflowSignal, args any,
-) (WorkflowFuture, error) {
+func (q *queue) SignalExternalWorkflow(ctx workflow.Context, opts wrk.Options, signal Signal, args any) (WorkflowFuture, error) {
 	if !opts.IsChild() {
-		return nil, workflows.ErrParentNil
+		return nil, wrk.ErrParentNil
 	}
 
 	return workflow.SignalExternalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args), nil
 }
 
 func (q *queue) QueryWorkflow(
-	ctx context.Context, options workflows.Options, query WorkflowSignal, args ...any,
+	ctx context.Context, opts wrk.Options, query Query, args ...any,
 ) (converter.EncodedValue, error) {
 	if q.client == nil {
 		return nil, ErrClientNil
 	}
 
-	return q.client.QueryWorkflow(ctx, q.WorkflowID(options), "", query.String(), args...)
+	return q.client.QueryWorkflow(ctx, q.WorkflowID(opts), "", query.String(), args...)
 }
 
-func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
+func (q *queue) RetryPolicy(opts wrk.Options) *temporal.RetryPolicy {
 	attempts := opts.MaxAttempts()
-	if attempts < workflows.RetryForever &&
-		q.workflowMaxAttempts < workflows.RetryForever &&
+	if attempts < wrk.RetryForever &&
+		q.workflowMaxAttempts < wrk.RetryForever &&
 		q.workflowMaxAttempts > attempts {
 		attempts = q.workflowMaxAttempts
 	}
@@ -301,9 +324,9 @@ func (q *queue) RetryPolicy(opts workflows.Options) *temporal.RetryPolicy {
 
 func (q *queue) CreateWorker(opts ...WorkerOption) {
 	q.once.Do(func() {
-		options := NewWorkerOptions(opts...)
+		opts := NewWorkerOptions(opts...)
 
-		q.worker = worker.New(q.client, q.Name().String(), options)
+		q.worker = worker.New(q.client, q.Name().String(), opts)
 	})
 }
 
@@ -356,7 +379,7 @@ func WithClient(c client.Client) QueueOption {
 	}
 }
 
-// New creates a new queue with the given options.
+// New creates a new queue with the given opts.
 // For a queue named "default", we will defined it as follows:
 //
 //	var DefaultQueue = queue.New(
@@ -365,7 +388,7 @@ func WithClient(c client.Client) QueueOption {
 //	  queue.WithMaxWorkflowAttempts(1),
 //	)
 func New(opts ...QueueOption) Queue {
-	q := &queue{workflowMaxAttempts: workflows.RetryForever}
+	q := &queue{workflowMaxAttempts: wrk.RetryForever}
 	for _, opt := range opts {
 		opt(q)
 	}

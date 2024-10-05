@@ -13,12 +13,11 @@ func TestWorkflowMod(t *testing.T) {
 		workflows.WithMod("mod"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "mod", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWorkflowModWithID(t *testing.T) {
@@ -27,12 +26,11 @@ func TestWorkflowModWithID(t *testing.T) {
 		workflows.WithModID("modid"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "mod.modid", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWorkflowElement(t *testing.T) {
@@ -40,12 +38,11 @@ func TestWorkflowElement(t *testing.T) {
 		workflows.WithElement("elm"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "elm", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWorkflowElementWithID(t *testing.T) {
@@ -54,12 +51,11 @@ func TestWorkflowElementWithID(t *testing.T) {
 		workflows.WithElementID("elmid"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "elm.elmid", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWorkflowBlock(t *testing.T) {
@@ -67,12 +63,11 @@ func TestWorkflowBlock(t *testing.T) {
 		workflows.WithBlock("block"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "block", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWorkflowBlockWithID(t *testing.T) {
@@ -81,12 +76,11 @@ func TestWorkflowBlockWithID(t *testing.T) {
 		workflows.WithBlockID("blockid"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "block.blockid", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 
 func TestWithProp(t *testing.T) {
@@ -100,12 +94,11 @@ func TestWithProp(t *testing.T) {
 		workflows.WithProp("prop", "value"),
 	)
 
-	parent, err := workflow.ParentWorkflowID()
+	parent := workflow.ParentWorkflowID()
 	suffix := workflow.IDSuffix()
 
 	assert.Equal(t, "block.blockid.elm.elmid.mod.modid.prop.value", suffix)
 	assert.Equal(t, "", parent)
-	assert.ErrorIs(t, err, workflows.ErrParentNil)
 }
 func TestWithPropMultiple(t *testing.T) {
 	workflow, _ := workflows.NewOptions(

@@ -128,7 +128,7 @@ func (s *QueueTestSuite) TestExecuteChildWorkflow() {
 func (s *QueueTestSuite) TestSignalWorkflow() {
 	ctx := context.Background()
 	id := uuid.New()
-	name := queues.WorkflowSignal("signal")
+	name := queues.Signal("signal")
 	opts, _ := workflows.NewOptions(
 		workflows.WithBlock("signal"),
 		workflows.WithBlockID(id.String()),
