@@ -13,11 +13,11 @@ const (
 type (
 	// Options defines the interface for creating workflow options.
 	Options interface {
-		IsChild() bool                     // IsChild returns true if the workflow id is a child workflow id.
-		ParentWorkflowID() (string, error) // ParentWorkflowID returns the parent workflow id.
-		IDSuffix() string                  // IDSuffix santizes the suffix of the workflow id and then formats it as a string.
-		MaxAttempts() int32                // MaxAttempts returns the max attempts for the workflow.
-		IgnoredErrors() []string           // IgnoredErrors returns the list of errors that are ok to ignore.
+		IsChild() bool            // IsChild returns true if the workflow id is a child workflow id.
+		ParentWorkflowID() string // ParentWorkflowID returns the parent workflow id.
+		IDSuffix() string         // IDSuffix santizes the suffix of the workflow id and then formats it as a string.
+		MaxAttempts() int32       // MaxAttempts returns the max attempts for the workflow.
+		IgnoredErrors() []string  // IgnoredErrors returns the list of errors that are ok to ignore.
 	}
 
 	// Option sets the specified options.
@@ -27,8 +27,6 @@ type (
 	props map[string]string
 
 	options struct {
-		parent_context workflow.Context // The parent workflow context.
-
 		ParentID       string   `json:"parent"`          // The parent workflow ID.
 		Block          string   `json:"block"`           // The block name.
 		BlockID        string   `json:"block_id"`        // The block identifier.
@@ -48,14 +46,9 @@ func (w *options) IsChild() bool {
 	return w.ParentID != ""
 }
 
-func (w *options) ID() string {
-	id := w.IDSuffix()
-
-	if w.IsChild() {
-		return w.ParentID + "." + id
-	}
-
-	return id
+// ParentWorkflowID returns the parent workflow id.
+func (w *options) ParentWorkflowID() string {
+	return w.ParentID
 }
 
 // IDSuffix sanitizes the suffix and returns it.
@@ -75,15 +68,6 @@ func (w *options) IDSuffix() string {
 	}
 
 	return strings.Join(sanitized, ".")
-}
-
-// ParentWorkflowID returns the parent workflow id.
-func (w *options) ParentWorkflowID() (string, error) {
-	if w.parent_context == nil {
-		return "", ErrParentNil
-	}
-
-	return workflow.GetInfo(w.parent_context).WorkflowExecution.ID, nil
 }
 
 // MaxAttempts returns the max attempts for the workflow.
