@@ -267,9 +267,7 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts wrk.Options, signal Sig
 	return q.client.SignalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args)
 }
 
-func (q *queue) SignalWithStartWorkflow(
-	ctx context.Context, opts wrk.Options, signal Signal, args any, fn any, payload ...any,
-) (WorkflowRun, error) {
+func (q *queue) SignalWithStartWorkflow(ctx context.Context, opts wrk.Options, signal Signal, args any, fn any, payload ...any) (WorkflowRun, error) {
 	if q.client == nil {
 		return nil, ErrClientNil
 	}
