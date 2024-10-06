@@ -51,23 +51,23 @@ func (w *options) ParentWorkflowID() string {
 	return w.ParentID
 }
 
-// IDSuffix sanitizes the suffix and returns it.
+// IDSuffix Sanitizes the suffix and returns it.
 func (w *options) IDSuffix() string {
 	parts := []string{w.Block, w.BlockID, w.Element, w.ElementID, w.Mod, w.ModID}
 	for _, key := range w.Order {
 		parts = append(parts, key, w.Props[key])
 	}
 
-	sanitized := make([]string, 0)
+	Sanitized := make([]string, 0)
 
 	// removing empty strings and trimming spaces
 	for _, part := range parts {
 		if strings.TrimSpace(part) != "" {
-			sanitized = append(sanitized, part)
+			Sanitized = append(Sanitized, part)
 		}
 	}
 
-	return strings.Join(sanitized, ".")
+	return strings.Join(Sanitized, ".")
 }
 
 // MaxAttempts returns the max attempts for the workflow.
@@ -95,7 +95,7 @@ func WithBlock(val string) Option {
 			return NewDuplicateIDPropError("block", o.(*options).Block, val)
 		}
 
-		o.(*options).Block = sanitize(val)
+		o.(*options).Block = Sanitize(val)
 
 		return nil
 	}
@@ -108,7 +108,7 @@ func WithBlockID(val string) Option {
 			return NewDuplicateIDPropError("blockID", o.(*options).BlockID, val)
 		}
 
-		o.(*options).BlockID = sanitize(val)
+		o.(*options).BlockID = Sanitize(val)
 
 		return nil
 	}
@@ -121,7 +121,7 @@ func WithElement(val string) Option {
 			return NewDuplicateIDPropError("element", o.(*options).Element, val)
 		}
 
-		o.(*options).Element = sanitize(val)
+		o.(*options).Element = Sanitize(val)
 
 		return nil
 	}
@@ -134,7 +134,7 @@ func WithElementID(val string) Option {
 			return NewDuplicateIDPropError("element id", o.(*options).ElementID, val)
 		}
 
-		o.(*options).ElementID = sanitize(val)
+		o.(*options).ElementID = Sanitize(val)
 
 		return nil
 	}
@@ -147,7 +147,7 @@ func WithMod(val string) Option {
 			return NewDuplicateIDPropError("modifier", o.(*options).Mod, val)
 		}
 
-		o.(*options).Mod = sanitize(val)
+		o.(*options).Mod = Sanitize(val)
 
 		return nil
 	}
@@ -160,7 +160,7 @@ func WithModID(val string) Option {
 			return NewDuplicateIDPropError("modifier id", o.(*options).ModID, val)
 		}
 
-		o.(*options).ModID = sanitize(val)
+		o.(*options).ModID = Sanitize(val)
 
 		return nil
 	}
@@ -170,7 +170,7 @@ func WithModID(val string) Option {
 func WithProp(key, val string) Option {
 	return func(o Options) error {
 		o.(*options).Order = append(o.(*options).Order, key)
-		o.(*options).Props[sanitize(key)] = sanitize(val)
+		o.(*options).Props[Sanitize(key)] = Sanitize(val)
 
 		return nil
 	}
