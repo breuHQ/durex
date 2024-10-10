@@ -3,7 +3,6 @@ module go.breu.io/durex
 go 1.21.0
 
 require (
-	github.com/gobeam/stringy v0.0.7
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
 	go.temporal.io/api v1.37.0

@@ -16,8 +16,6 @@ github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a/go.mod h1:7Ga40eg
 github.com/go-kit/log v0.1.0/go.mod h1:zbhenjAZHb184qTLMA9ZjW7ThYL0H2mk7Q6pNt4vbaY=
 github.com/go-logfmt/logfmt v0.5.0/go.mod h1:wCYkCAKZfumFQihp8CzCvQ3paCTfi41vtzG1KdI/P7A=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
-github.com/gobeam/stringy v0.0.7 h1:TD8SfhedUoiANhW88JlJqfrMsihskIRpU/VTsHGnAps=
-github.com/gobeam/stringy v0.0.7/go.mod h1:W3620X9dJHf2FSZF5fRnWekHcHQjwmCz8ZQ2d1qloqE=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
