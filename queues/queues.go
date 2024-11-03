@@ -160,7 +160,7 @@ type (
 		CreateWorker(opts ...WorkerOption)
 
 		// Start starts the worker against the queue. CreateWorker must be called before calling this function.
-		Start() error
+		Start(context.Context) error
 
 		// Shutdown shuts down the worker against the queue.
 		Shutdown(context.Context) error
@@ -330,7 +330,7 @@ func (q *queue) CreateWorker(opts ...WorkerOption) {
 	})
 }
 
-func (q *queue) Start() error {
+func (q *queue) Start(ctx context.Context) error {
 	if q.worker == nil {
 		return ErrWorkerNil
 	}
