@@ -348,6 +348,10 @@ func (q *queue) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+func (q *queue) Stop(ctx context.Context) error {
+	return q.Shutdown(ctx)
+}
+
 func (q *queue) RegisterWorkflow(fn any) {
 	q.worker.RegisterWorkflow(fn)
 }
