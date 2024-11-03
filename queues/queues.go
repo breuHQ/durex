@@ -162,6 +162,8 @@ type (
 		// Start starts the worker against the queue. CreateWorker must be called before calling this function.
 		Start(context.Context) error
 
+		Stop(context.Context) error
+
 		// Shutdown shuts down the worker against the queue.
 		Shutdown(context.Context) error
 
