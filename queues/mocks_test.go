@@ -45,6 +45,10 @@ func (m *MockClient) SignalWithStartWorkflow(
 	return nil, nil
 }
 
+func (m *MockClient) NewWithStartWorkflowOperation(options client.StartWorkflowOptions, workflow any, args ...any) client.WithStartWorkflowOperation {
+	return nil
+}
+
 func (m *MockClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	return nil
 }
@@ -117,6 +121,10 @@ func (m *MockClient) DescribeWorkflowExecution(ctx context.Context, workflowID, 
 	return &workflowservice.DescribeWorkflowExecutionResponse{}, nil
 }
 
+func (m *MockClient) DescribeWorkflow(ctx context.Context, workflowID, runID string) (*client.WorkflowExecutionDescription, error) {
+	return &client.WorkflowExecutionDescription{}, nil
+}
+
 func (m *MockClient) DescribeTaskQueue(ctx context.Context, taskqueue string, taskqueueType enums.TaskQueueType) (*workflowservice.DescribeTaskQueueResponse, error) {
 	return &workflowservice.DescribeTaskQueueResponse{}, nil
 }
@@ -145,6 +153,14 @@ func (m *MockClient) UpdateWorkflow(ctx context.Context, options client.UpdateWo
 	return nil, nil
 }
 
+func (m *MockClient) UpdateWorkflowExecutionOptions(ctx context.Context, options client.UpdateWorkflowExecutionOptionsRequest) (client.WorkflowExecutionOptions, error) {
+	return client.WorkflowExecutionOptions{}, nil
+}
+
+func (m *MockClient) UpdateWithStartWorkflow(ctx context.Context, options client.UpdateWithStartWorkflowOptions) (client.WorkflowUpdateHandle, error) {
+	return nil, nil
+}
+
 func (m *MockClient) GetWorkflowUpdateHandle(ref client.GetWorkflowUpdateHandleOptions) client.WorkflowUpdateHandle {
 	return nil
 }
@@ -158,6 +174,14 @@ func (m *MockClient) OperatorService() operatorservice.OperatorServiceClient {
 }
 
 func (m *MockClient) ScheduleClient() client.ScheduleClient {
+	return nil
+}
+
+func (m *MockClient) DeploymentClient() client.DeploymentClient {
+	return nil
+}
+
+func (m *MockClient) WorkerDeploymentClient() client.WorkerDeploymentClient {
 	return nil
 }
 
