@@ -359,6 +359,8 @@ func (q *queue) Start(ctx context.Context) error {
 func (q *queue) Shutdown(ctx context.Context) error {
 	if q.worker == nil {
 		slog.Warn("queues: worker is nil, skipping shutdown ...", "queue", q.Name())
+
+		return nil
 	}
 
 	q.worker.Stop()
