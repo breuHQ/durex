@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/github/license/breuHQ/go-temporal-tools)](./LICENSE)
 ![GitHub contributors](https://img.shields.io/github/contributors/breuHQ/go-temporal-tools)
 
-> [!WARNING]  
+> [!WARNING]
 > This is a work in porgress. The surface API can change without warning.
 
 ## 🚀 Install
@@ -15,14 +15,14 @@
 go get go.breu.io/durex
 ```
 
-**Compatibility**: go >= 1.21
+**Compatibility**: go >= 1.23
 
 ## Why?
 
 After working with temporal.io across multiple projects, we have standarized a set of best practices across our projects.
+
 For example, to create a unique & identifiable workflow id for debugging, we have found that following
-the [block, element, modifier](https://getbem.com/introduction/) method, a technique for writing maintainable CSS,
-makes it very readable and maintainable.
+the [block, element, modifier](https://getbem.com/introduction/) method, a technique for writing maintainable CSS, makes it very readable and maintainable.
 
 We also found that attaching the workflow to a queue makes it very easy. For us, `Queue` is where it all begins.
 

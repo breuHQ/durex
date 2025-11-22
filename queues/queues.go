@@ -22,6 +22,7 @@ package queues
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"go.temporal.io/sdk/client"
@@ -37,8 +38,21 @@ type (
 	// Name is the name of the queue.
 	Name string
 
-	// Queue defines the queue interface.
-	Queue interface {
+	// Queue manages Temporal workflows and activities associated with a specific task queue.
+	//
+	// Queue methods are categorized by their calling context:
+	//
+	// 1. Client-side: Call these outside a Temporal workflow (e.g., from an API handler, CLI, or activity).
+	//    They accept a `context.Context` as their first argument.
+	//    Examples include ExecuteWorkflow, SignalWorkflow, and QueryWorkflow.
+	//
+	// 2. In-workflow: Call these only from within a Temporal workflow.
+	//    They accept a `workflow.Context` as their first argument.
+	//    Examples include ExecuteChildWorkflow and SignalExternalWorkflow.
+	//
+	// Queue manages workflows registered on its task queue. To interact with workflows
+	// on a different task queue, use a Temporal activity.
+	Queue interface { // nolint : This is supposed to be long, therefore disabling linter.
 		// Name gets the name of the queue as string.
 		Name() Name
 
@@ -146,11 +160,11 @@ type (
 
 		// CreateWorker configures the worker for the queue.
 		//
-		// This function configures the worker responsible for executing registered workflows and activities.  It uses a
+		// Configures the worker responsible for executing registered workflows and activities.  It uses a
 		// builder pattern, with helper functions prefixed by queues.WithWorkerOption{Option}, where {Option} corresponds to
 		// a field in Temporal's worker.Option. This allows configuring worker behavior at runtime, such as setting maximum
 		// concurrent tasks, enabling sessions etc.  The worker is a singleton, meaning only one worker can be created per
-		// queue. Call this function *before* registering workflows and activities (queues.RegisterWorkflow and
+		// queue. Call this function before registering workflows and activities (queues.RegisterWorkflow and
 		// queues.RegisterActivity) to ensure correct association.
 		//
 		//	q := queues.New(queues.WithName("my-queue"), queues.WithClient(client))
@@ -333,16 +347,12 @@ func (q *queue) CreateWorker(opts ...WorkerOption) {
 }
 
 func (q *queue) Start(ctx context.Context) error {
-	if q.worker == nil {
-		return ErrWorkerNil
-	}
-
 	return q.worker.Start()
 }
 
 func (q *queue) Shutdown(ctx context.Context) error {
 	if q.worker == nil {
-		return ErrWorkerNil
+		slog.Warn("queues: worker is nil, skipping shutdown ...", "queue", q.Name())
 	}
 
 	q.worker.Stop()

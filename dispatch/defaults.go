@@ -48,7 +48,7 @@ func WithIgnoredErrorsContext(ctx workflow.Context, args ...string) workflow.Con
 //	ctx = shared.WithMarathonContext(ctx)
 func WithMarathonContext(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		StartToCloseTimeout: 60 * time.Minute,
+		StartToCloseTimeout: 24 * time.Hour,
 		HeartbeatTimeout:    30 * time.Second,
 	})
 }
