@@ -347,6 +347,12 @@ func (q *queue) CreateWorker(opts ...WorkerOption) {
 }
 
 func (q *queue) Start(ctx context.Context) error {
+	if q.worker == nil {
+		slog.Warn("queues: worker is nil, skipping start ...", "queue", q.Name())
+
+		return nil
+	}
+
 	return q.worker.Start()
 }
 
