@@ -5,10 +5,6 @@ import (
 )
 
 type (
-	// WorkflowSignal is a string alias intended for defining groups of workflow signals.
-	//
-	// Depraecated: Use Signal instead.
-	WorkflowSignal string
 
 	// Signal is a string alias intended for defining groups of workflow signals, "register" , "send_welcome_email" etc.
 	// It ensures consistency and code clarity. The Signal type provides methods for conversion and serialization,
@@ -19,25 +15,6 @@ type (
 	// for Signal type, but for some wierd reason, if was causing temporal to panic when marshalling the type to JSON.
 	Query string
 )
-
-func (s WorkflowSignal) String() string {
-	return string(s)
-}
-
-func (s WorkflowSignal) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(s))
-}
-
-func (s *WorkflowSignal) UnmarshalJSON(data []byte) error {
-	var str string
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-
-	*s = WorkflowSignal(str)
-
-	return nil
-}
 
 func (s Signal) String() string {
 	return string(s)
