@@ -200,7 +200,7 @@ type (
 		prefix              string // The prefix for the Workflow ID.
 		workflowMaxAttempts int32  // The maximum number of attempts for a workflow.
 
-		client client.Client // The temporal client.
+		client func() client.Client
 
 		once   sync.Once     // The sync.Once for the queue.
 		worker worker.Worker // The temporal worker.
@@ -243,7 +243,7 @@ func (q *queue) ExecuteWorkflow(ctx context.Context, opts wrk.Options, fn any, p
 		return nil, ErrClientNil
 	}
 
-	return q.client.ExecuteWorkflow(
+	return q.client().ExecuteWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
 			ID:          q.WorkflowID(opts),
@@ -280,7 +280,7 @@ func (q *queue) SignalWorkflow(ctx context.Context, opts wrk.Options, signal Sig
 		return ErrExternalWorkflowSignalAttempt
 	}
 
-	return q.client.SignalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args)
+	return q.client().SignalWorkflow(ctx, q.WorkflowID(opts), "", signal.String(), args)
 }
 
 func (q *queue) SignalWithStartWorkflow(
@@ -294,7 +294,7 @@ func (q *queue) SignalWithStartWorkflow(
 		return nil, wrk.ErrParentNil
 	}
 
-	return q.client.SignalWithStartWorkflow(
+	return q.client().SignalWithStartWorkflow(
 		ctx,
 		q.WorkflowID(opts),
 		signal.String(),
@@ -324,7 +324,7 @@ func (q *queue) QueryWorkflow(
 		return nil, ErrClientNil
 	}
 
-	return q.client.QueryWorkflow(ctx, q.WorkflowID(opts), "", query.String(), args...)
+	return q.client().QueryWorkflow(ctx, q.WorkflowID(opts), "", query.String(), args...)
 }
 
 func (q *queue) RetryPolicy(opts wrk.Options) *temporal.RetryPolicy {
@@ -342,7 +342,7 @@ func (q *queue) CreateWorker(opts ...WorkerOption) {
 	q.once.Do(func() {
 		opts := NewWorkerOptions(opts...)
 
-		q.worker = worker.New(q.client, q.Name().String(), opts)
+		q.worker = worker.New(q.client(), q.Name().String(), opts)
 	})
 }
 
@@ -397,7 +397,7 @@ func WithWorkflowMaxAttempts(attempts int32) QueueOption {
 }
 
 // WithClient sets the client for the queue.
-func WithClient(c client.Client) QueueOption {
+func WithClient(c func() client.Client) QueueOption {
 	return func(q Queue) {
 		q.(*queue).client = c
 	}

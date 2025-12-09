@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 
@@ -26,7 +27,9 @@ type (
 
 func (s *QueueTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
-	c := &MockClient{env: s.env}
+	c := func() client.Client {
+		return &MockClient{env: s.env}
+	}
 
 	s.queue = queues.New(
 		queues.WithName("test"),
